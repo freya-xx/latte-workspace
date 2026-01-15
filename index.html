@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latte Workspace</title>
+    <style>
+        /* --- 1. AESTHETICS (Warm Latte Theme) --- */
+        :root {
+            --bg-color: #fdfcf0;        
+            --card-bg: #ffffff;         
+            --primary-brown: #8d6e63;   
+            --light-brown: #d7ccc8;     
+            --dark-text: #4e342e;
+            --highlight: #efebe9;
+            --shadow: 0 8px 20px rgba(78, 52, 46, 0.08);
+            --success-green: #66bb6a;
+            --soft-red: #ff8a80;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--dark-text);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+
+        /* --- CARDS --- */
+        .card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid #efebe9;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h2 {
+            margin-top: 0; font-weight: 700; color: var(--primary-brown);
+            font-size: 1.4rem; text-transform: uppercase; letter-spacing: 1px;
+            border-bottom: 3px solid var(--bg-color); padding-bottom: 15px; margin-bottom: 20px;
+        }
+
+        /* --- BUTTONS --- */
+        button { cursor: pointer; transition: all 0.2s; font-family: inherit; }
+        
+        .btn { padding: 12px 24px; border: none; border-radius: 10px; font-weight: 700; font-size: 1rem; }
+        .btn-brown { background: var(--primary-brown); color: white; }
+        .btn-brown:hover { background: #6d4c41; transform: translateY(-2px); }
+        .btn-outline { background: transparent; border: 2px solid var(--primary-brown); color: var(--primary-brown); }
+        .btn-outline:hover { background: var(--bg-color); }
+        
+        /* Update Button Style */
+        .btn-update { background: var(--success-green); color: white; }
+        .btn-update:hover { background: #388e3c; transform: translateY(-2px); }
+
+        /* Round Buttons */
+        .btn-circle { 
+            border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; 
+            padding: 0; line-height: 0; flex-shrink: 0;
+        }
+        .btn-control { width: 50px; height: 50px; font-size: 1.5rem; background: var(--highlight); color: var(--primary-brown); }
+        .btn-control:hover { background: var(--light-brown); }
+        .btn-play { width: 70px; height: 70px; font-size: 2.2rem; background: var(--primary-brown); color: white; padding-left: 6px; }
+        .btn-action-circle { width: 45px; height: 45px; font-size: 1.8rem; }
+        .btn-add { background: var(--primary-brown); color: white; }
+        
+        /* Delete & Edit Buttons */
+        .btn-icon-small { 
+            background: transparent; border: none; color: #bcaaa4; 
+            font-size: 1.1rem; cursor: pointer; padding: 5px; margin-left: 5px;
+        }
+        .btn-del:hover { color: #d32f2f; background: #ffebee; border-radius: 5px; }
+        .btn-edit:hover { color: #1976D2; background: #e3f2fd; border-radius: 5px; }
+
+
+        /* --- LAYOUT GRID --- */
+        .row { display: grid; gap: 2.5rem; }
+        .top-row { grid-template-columns: 1.2fr 0.8fr; }
+        .mid-row { grid-template-columns: 1fr 1fr; }
+        .btm-row { grid-template-columns: 2fr 1fr; }
+
+        /* --- MUSIC PLAYER --- */
+        .player-interface { display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        .song-title { font-size: 1.2rem; font-weight: bold; color: var(--dark-text); text-align: center; min-height: 1.5em;}
+        .progress-container { width: 100%; display: flex; align-items: center; gap: 10px; font-family: monospace; font-size: 1rem; color: #666; }
+        input[type="range"] { flex-grow: 1; height: 8px; border-radius: 5px; background: #eee; outline: none; -webkit-appearance: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--primary-brown); border-radius: 50%; cursor: pointer; }
+        .controls-row { display: flex; gap: 20px; align-items: center; justify-content: center; margin-bottom: 15px; }
+        .playlist-box { width: 100%; max-height: 150px; overflow-y: auto; background: #fafafa; border-radius: 10px; border: 1px solid #eee; }
+        .playlist-item { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; }
+        .playlist-item:hover { background: #f0ebf8; }
+        .playlist-item.active { background: var(--light-brown); font-weight: bold; }
+        .playlist-item.editing-active { background-color: #e8f5e9; border-left: 5px solid var(--success-green); }
+
+        /* --- TIMER --- */
+        .timer-display { font-size: 4.5rem; font-weight: 800; color: var(--dark-text); margin: 10px 0; text-align: center; letter-spacing: 2px; }
+        .timer-tools { display: flex; justify-content: center; gap: 15px; }
+
+        /* --- INPUTS & LISTS --- */
+        .input-group { display: flex; gap: 15px; margin-bottom: 1.5rem; }
+        .input-group input { flex-grow: 1; padding: 15px; font-size: 1rem; border: 2px solid var(--light-brown); border-radius: 10px; outline: none; background: #fafafa; }
+        ul { list-style: none; padding: 0; }
+        li { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 1.1rem; }
+        .badge { background: var(--light-brown); color: var(--dark-text); padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 1rem; min-width: 30px; text-align: center; }
+
+        /* --- TO-DO SPECIFIC STYLES --- */
+        .todo-content { display: flex; align-items: center; gap: 10px; flex-grow: 1; cursor: pointer;}
+        .todo-checkbox { width: 22px; height: 22px; cursor: pointer; accent-color: var(--primary-brown); }
+        .todo-text { transition: all 0.3s; padding: 5px; }
+        .todo-text.completed { text-decoration: line-through; color: #aaa; }
+        .edit-input-inline { font-size: 1rem; padding: 5px 8px; border: 1px solid var(--primary-brown); border-radius: 5px; color: var(--dark-text); flex-grow: 1; width: 100%; }
+
+        /* --- NOTEPAD & TRASH --- */
+        .notepad-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        textarea { width: 100%; height: 300px; padding: 20px; font-size: 1rem; border: 2px solid var(--light-brown); border-radius: 10px; resize: none; outline: none; font-family: inherit; background: #fafafa; box-sizing: border-box; }
+        
+        /* NEW: TRASH STYLES */
+        .trash-area { background: #fff5f2; border-color: #ffccbc; }
+        
+        /* Specific Trash Item Styling */
+        .trash-card {
+            background-color: #ffffff;
+            border: 1px solid #ffccbc; /* Light red border matching container */
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        
+        .trash-card:hover {
+            transform: translateX(3px);
+            background-color: #fffbfb;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+        }
+
+        /* Trash Tags Styling */
+        .trash-tag {
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-right: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* Unique colors for tags */
+        .tag-todo { background-color: #e0f2f1; color: #00695c; }   /* Teal */
+        .tag-habit { background-color: #f1f8e9; color: #33691e; }  /* Light Green */
+        .tag-note { background-color: #fff3e0; color: #e65100; }   /* Orange */
+
+        .trash-text {
+            color: #6d4c41; /* Softer brown */
+            font-size: 0.95rem;
+        }
+
+        .btn-recover {
+            font-size: 0.9rem;
+            color: #4caf50;
+            background: #e8f5e9;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid #c8e6c9;
+            margin-left: 10px;
+        }
+        .btn-recover:hover {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        @media (max-width: 900px) {
+            .row { grid-template-columns: 1fr; }
+            .notepad-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+
+    <div class="row top-row">
+        <div class="card">
+            <h2>🎧 My Playlist</h2>
+            <audio id="audioPlayer"></audio>
+            <div class="player-interface">
+                <div class="song-title" id="currentSong">Select a track...</div>
+                <div class="controls-row">
+                    <button class="btn-circle btn-control" onclick="prevTrack()">⏮</button>
+                    <button class="btn-circle btn-play" onclick="togglePlay()" id="playBtn">▶</button>
+                    <button class="btn-circle btn-control" onclick="stopMusic()">⏹</button>
+                    <button class="btn-circle btn-control" onclick="nextTrack()">⏭</button>
+                </div>
+                <div class="progress-container">
+                    <span id="currTime">00:00</span>
+                    <input type="range" id="progressBar" value="0" min="0" step="1" oninput="seekAudio()">
+                    <span id="durTime">00:00</span>
+                </div>
+            </div>
+            <div style="margin-top:20px; font-weight:bold; color:#888; font-size:0.9rem;">UP NEXT:</div>
+            <div class="playlist-box" id="playlistBox"></div>
+        </div>
+
+        <div class="card" style="text-align:center;">
+            <h2>⏱️ Focus Timer</h2>
+            <div class="timer-display" id="timer">25:00</div>
+            <div class="timer-tools">
+                <button class="btn btn-outline" onclick="adjustTime(-5)">-5</button>
+                <button class="btn btn-brown" onclick="toggleTimer()" id="startBtn">Start</button>
+                <button class="btn btn-outline" onclick="resetTimer()">Reset</button>
+                <button class="btn btn-outline" onclick="adjustTime(5)">+5</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mid-row">
+        
+        <div class="card">
+            <h2>📝 To-Do List</h2>
+            <div class="input-group">
+                <input type="text" id="todoInput" placeholder="Add a new task...">
+                <button class="btn-circle btn-action-circle btn-add" onclick="addTodo()">+</button>
+            </div>
+            <ul id="todoList"></ul>
+        </div>
+
+        <div class="card">
+            <h2>🌱 Habit Tracker</h2>
+            <div class="input-group">
+                <input type="text" id="habitInput" placeholder="New habit...">
+                <button class="btn-circle btn-action-circle btn-add" onclick="addHabit()">+</button>
+            </div>
+            <ul id="habitList"></ul>
+        </div>
+    </div>
+
+    <div class="row btm-row">
+        <div class="card">
+            <h2>📓 Knowledge Base</h2>
+            <div class="notepad-grid">
+                <div>
+                    <input type="text" id="noteTitle" placeholder="Note Title..." style="width:100%; padding:12px; margin-bottom:10px; border:2px solid #ddd; border-radius:8px; box-sizing: border-box; font-size:1.1rem; font-weight:bold;">
+                    <textarea id="noteBody" placeholder="Start writing..."></textarea>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button id="noteSaveBtn" class="btn btn-brown" style="flex-grow: 1;" onclick="saveNote()">Save to Archive 📁</button>
+                        <button id="noteCancelBtn" class="btn btn-outline" style="display: none;" onclick="cancelNoteEdit()">Cancel</button>
+                    </div>
+
+                </div>
+                <div>
+                    <h3 style="margin-top:0; font-size:1rem; color:#888;">Archived Notes</h3>
+                    <div id="archiveList" class="playlist-box" style="height:350px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card trash-area">
+            <h2>🗑️ Recycle Bin</h2>
+            <div style="font-size:0.9rem; color:#d84315; margin-bottom:15px; font-weight:bold;">Deleted Items:</div>
+            
+            <div id="trashList" style="max-height:300px; overflow-y:auto; padding-right:5px;"></div>
+            
+            <button class="btn btn-outline" style="width:100%; margin-top:15px; border-color:#d84315; color:#d84315;" onclick="clearTrash()">Empty Trash</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    /* --- 1. DATA INITIALIZATION & MIGRATION --- */
+    let rawTodos = JSON.parse(localStorage.getItem('myTodos')) || [];
+    let todos = [];
+    if (rawTodos.length > 0 && typeof rawTodos[0] === 'string') {
+        todos = rawTodos.map(t => ({ text: t, done: false, isEditing: false }));
+    } else {
+        todos = rawTodos.map(t => ({ ...t, isEditing: false }));
+    }
+
+    let rawHabits = JSON.parse(localStorage.getItem('myHabits')) || [];
+    let habits = rawHabits.map(h => ({ ...h, isEditing: false }));
+
+    let archives = JSON.parse(localStorage.getItem('myArchives')) || [];
+    let trash = JSON.parse(localStorage.getItem('myTrash')) || [];
+
+    function saveAll() {
+        const cleanTodos = todos.map(t => ({ text: t.text, done: t.done }));
+        localStorage.setItem('myTodos', JSON.stringify(cleanTodos));
+        const cleanHabits = habits.map(h => ({ name: h.name, count: h.count }));
+        localStorage.setItem('myHabits', JSON.stringify(cleanHabits));
+        localStorage.setItem('myArchives', JSON.stringify(archives));
+        localStorage.setItem('myTrash', JSON.stringify(trash));
+    }
+
+    /* --- 2. TO-DO LOGIC --- */
+    function renderTodos() {
+        const list = document.getElementById('todoList');
+        list.innerHTML = '';
+        todos.forEach((todo, index) => {
+            const li = document.createElement('li');
+            const isChecked = todo.done ? 'checked' : '';
+            const textClass = todo.done ? 'todo-text completed' : 'todo-text';
+            if (todo.isEditing) {
+                li.innerHTML = `
+                    <div class="todo-content">
+                        <input type="checkbox" class="todo-checkbox" onchange="toggleTodo(${index})" ${isChecked}>
+                        <input type="text" class="edit-input-inline" id="edit-todo-${index}" value="${todo.text}">
+                        <button class="btn-icon-small btn-edit" title="Save" onclick="saveTodoEdit(${index})">💾</button>
+                    </div>
+                    <button class="btn-icon-small btn-del" onclick="deleteTodo(${index})">✕</button>
+                `;
+            } else {
+                li.innerHTML = `
+                    <div class="todo-content">
+                        <input type="checkbox" class="todo-checkbox" onchange="toggleTodo(${index})" ${isChecked}>
+                        <span class="${textClass}">${todo.text}</span>
+                        <button class="btn-icon-small btn-edit" title="Edit" onclick="toggleTodoEdit(${index})">✎</button>
+                    </div>
+                    <button class="btn-icon-small btn-del" onclick="deleteTodo(${index})">✕</button>
+                `;
+            }
+            list.appendChild(li);
+        });
+    }
+
+    function addTodo() {
+        const input = document.getElementById('todoInput');
+        const text = input.value.trim();
+        if(text) {
+            todos.push({ text: text, done: false, isEditing: false });
+            input.value = '';
+            saveAll();
+            renderTodos();
+        }
+    }
+    function toggleTodo(index) { todos[index].done = !todos[index].done; saveAll(); renderTodos(); }
+    function toggleTodoEdit(index) { todos[index].isEditing = true; renderTodos(); setTimeout(() => document.getElementById(`edit-todo-${index}`).focus(), 50); }
+    function saveTodoEdit(index) {
+        const input = document.getElementById(`edit-todo-${index}`);
+        const newText = input.value.trim();
+        if (newText) { todos[index].text = newText; todos[index].isEditing = false; saveAll(); renderTodos(); }
+    }
+    function deleteTodo(index) { addToTrash(todos[index], 'Todo'); todos.splice(index, 1); saveAll(); renderTodos(); }
+
+    /* --- 3. HABIT LOGIC --- */
+    function renderHabits() {
+        const list = document.getElementById('habitList'); list.innerHTML='';
+        habits.forEach((h, i) => {
+            const li = document.createElement('li');
+            if(h.isEditing) {
+                li.innerHTML = `
+                    <div style="flex-grow:1; display:flex; gap:5px; align-items:center;">
+                        <input type="text" class="edit-input-inline" id="edit-habit-${i}" value="${h.name}">
+                        <button class="btn-icon-small btn-edit" onclick="saveHabitEdit(${i})">💾</button>
+                    </div>
+                `;
+            } else {
+                li.innerHTML = `
+                    <div style="display:flex; align-items:center;">
+                        <span>${h.name}</span>
+                        <button class="btn-icon-small btn-edit" onclick="toggleHabitEdit(${i})">✎</button>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button class="btn-circle btn-control" style="width:40px;height:40px;" onclick="modHabit(${i},-1)">-</button>
+                        <span class="badge" style="font-size:1.2rem;">${h.count}</span>
+                        <button class="btn-circle btn-action-circle btn-add" style="width:40px;height:40px;" onclick="modHabit(${i},1)">+</button>
+                        <button class="btn-icon-small btn-del" onclick="delHabit(${i})">✕</button>
+                    </div>`;
+            }
+            list.appendChild(li);
+        });
+    }
+    function addHabit() { const v=document.getElementById('habitInput').value; if(v){habits.push({name:v, count:0, isEditing:false}); document.getElementById('habitInput').value=''; saveAll(); renderHabits();}}
+    function toggleHabitEdit(index) { habits[index].isEditing = true; renderHabits(); setTimeout(() => document.getElementById(`edit-habit-${index}`).focus(), 50); }
+    function saveHabitEdit(index) { const input = document.getElementById(`edit-habit-${index}`); const newName = input.value.trim(); if(newName) { habits[index].name = newName; habits[index].isEditing = false; saveAll(); renderHabits(); }}
+    function modHabit(i,d) { if(habits[i].count+d>=0){habits[i].count+=d; saveAll(); renderHabits();}}
+    function delHabit(i) { addToTrash(habits[i], 'Habit'); habits.splice(i,1); saveAll(); renderHabits(); }
+
+    /* --- 4. NOTE LOGIC --- */
+    let editingNoteIndex = null;
+    function renderArchive() {
+        const list = document.getElementById('archiveList'); list.innerHTML='';
+        archives.forEach((n, i) => {
+            const div = document.createElement('div'); 
+            const isEditing = (i === editingNoteIndex);
+            div.className = isEditing ? 'playlist-item editing-active' : 'playlist-item';
+            div.innerHTML = `<strong>📁 ${n.title}</strong> <button class="btn-icon-small btn-del" style="margin-left:auto; font-size:1rem;" onclick="delNote(${i})">✕</button>`;
+            div.onclick = (e) => { 
+                if(e.target.tagName!=='BUTTON'){ loadNoteForEdit(i); } 
+            };
+            list.appendChild(div);
+        });
+    }
+    function loadNoteForEdit(index) {
+        editingNoteIndex = index;
+        document.getElementById('noteTitle').value = archives[index].title;
+        document.getElementById('noteBody').value = archives[index].body;
+        const saveBtn = document.getElementById('noteSaveBtn');
+        const cancelBtn = document.getElementById('noteCancelBtn');
+        saveBtn.innerText = "Update Note 💾";
+        saveBtn.classList.remove('btn-brown');
+        saveBtn.classList.add('btn-update'); 
+        cancelBtn.style.display = "inline-block";
+        renderArchive(); 
+    }
+    function cancelNoteEdit() {
+        editingNoteIndex = null;
+        document.getElementById('noteTitle').value = '';
+        document.getElementById('noteBody').value = '';
+        const saveBtn = document.getElementById('noteSaveBtn');
+        const cancelBtn = document.getElementById('noteCancelBtn');
+        saveBtn.innerText = "Save to Archive 📁";
+        saveBtn.classList.add('btn-brown');
+        saveBtn.classList.remove('btn-update');
+        cancelBtn.style.display = "none";
+        renderArchive();
+    }
+    function saveNote() {
+        const t = document.getElementById('noteTitle').value; const b = document.getElementById('noteBody').value;
+        if (!t && !b) { alert("Cannot save an empty note."); return; }
+        if (editingNoteIndex !== null) { archives[editingNoteIndex] = { title: t, body: b }; cancelNoteEdit(); } 
+        else { archives.unshift({ title: t, body: b }); document.getElementById('noteTitle').value=''; document.getElementById('noteBody').value=''; }
+        saveAll(); renderArchive();
+    }
+    function delNote(i) { 
+        if (i === editingNoteIndex) cancelNoteEdit();
+        else if (editingNoteIndex !== null && i < editingNoteIndex) editingNoteIndex--; 
+        addToTrash(archives[i], 'Note'); archives.splice(i,1); saveAll(); renderArchive(); 
+    }
+
+    /* --- 5. UPDATED TRASH LOGIC --- */
+    function addToTrash(item, type) { trash.unshift({ ...item, type, deletedAt: new Date() }); saveAll(); renderTrash(); }
+    
+    function renderTrash() {
+        const list = document.getElementById('trashList'); list.innerHTML='';
+        
+        if(!trash.length) {
+            list.innerHTML = '<div style="color:#aaa;text-align:center; padding:20px;">Trash is empty</div>';
+            return;
+        }
+
+        trash.forEach((item, i) => {
+            const div = document.createElement('div');
+            div.className = 'trash-card';
+            
+            // Determine text content based on type
+            let contentText = item.text || item.name || item.title || "Untitled";
+            
+            div.innerHTML = `
+                <div style="display:flex; align-items:center; overflow:hidden;">
+                    <span class="trash-tag tag-${item.type.toLowerCase()}">${item.type}</span>
+                    <span class="trash-text" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px;">${contentText}</span>
+                </div>
+                <button class="btn-recover" onclick="recoverItem(${i})">Recover ↰</button>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function recoverItem(i) {
+        const item = trash[i];
+        if(item.type==='Todo') todos.push({ text: item.text, done: item.done || false, isEditing: false });
+        if(item.type==='Habit') habits.push({name:item.name, count:item.count, isEditing: false });
+        if(item.type==='Note') archives.unshift(item);
+        trash.splice(i,1); saveAll(); renderAll();
+    }
+    function clearTrash() { if(confirm("Empty trash?")) { trash=[]; saveAll(); renderTrash(); } }
+
+    /* --- 6. MUSIC & TIMER LOGIC --- */
+    const audio = document.getElementById('audioPlayer');
+    const playBtn = document.getElementById('playBtn');
+    const progressBar = document.getElementById('progressBar');
+    const titleDisplay = document.getElementById('currentSong');
+    const currTimeDisplay = document.getElementById('currTime');
+    const durTimeDisplay = document.getElementById('durTime');
+    const playlistBox = document.getElementById('playlistBox');
+
+    const songs = [
+        { 
+            title: "Lofi Study 📚", 
+            src: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112762.mp3" 
+        },
+        { 
+            title: "Focus Flow 🧠", 
+            src: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=lofi-chill-medium-version-16447.mp3" 
+        }
+    ];
+    let songIndex = 0;
+
+    function loadPlaylistUI() {
+        playlistBox.innerHTML = '';
+        songs.forEach((song, index) => {
+            const div = document.createElement('div');
+            div.className = `playlist-item ${index === songIndex ? 'active' : ''}`;
+            div.innerHTML = `<span>🎵</span> ${song.title}`;
+            div.onclick = () => loadSong(index);
+            playlistBox.appendChild(div);
+        });
+    }
+    function loadSong(index) {
+        songIndex = index; audio.src = songs[songIndex].src; titleDisplay.innerText = songs[songIndex].title;
+        loadPlaylistUI(); playMusic();
+    }
+    function playMusic() { audio.play().catch(e => console.log("Waiting")); playBtn.innerText = "⏸"; playBtn.style.paddingLeft = "0"; }
+    function pauseMusic() { audio.pause(); playBtn.innerText = "▶"; playBtn.style.paddingLeft = "6px"; }
+    function togglePlay() { if (audio.paused) { if(!audio.src) loadSong(0); else playMusic(); } else { pauseMusic(); } }
+    function stopMusic() { audio.pause(); audio.currentTime = 0; playBtn.innerText = "▶"; playBtn.style.paddingLeft = "6px"; }
+    function nextTrack() { songIndex++; if (songIndex > songs.length - 1) songIndex = 0; loadSong(songIndex); }
+    function prevTrack() { songIndex--; if (songIndex < 0) songIndex = songs.length - 1; loadSong(songIndex); }
+    
+    audio.addEventListener('timeupdate', () => {
+        if(isNaN(audio.duration)) return;
+        progressBar.value = audio.currentTime; progressBar.max = audio.duration;
+        currTimeDisplay.innerText = formatTime(audio.currentTime); durTimeDisplay.innerText = formatTime(audio.duration);
+    });
+    audio.addEventListener('ended', nextTrack);
+    function seekAudio() { audio.currentTime = progressBar.value; }
+    function formatTime(t) { const m=Math.floor(t/60); const s=Math.floor(t%60); return `${m<10?'0'+m:m}:${s<10?'0'+s:s}`; }
+
+    let timeLeft = 25 * 60; let timerId = null; let isRunning = false;
+    function updateTimer() {
+        const m = Math.floor(timeLeft / 60); const s = timeLeft % 60;
+        document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+    function toggleTimer() {
+        if (isRunning) { clearInterval(timerId); isRunning=false; document.getElementById('startBtn').innerText="Start"; }
+        else {
+            isRunning=true; document.getElementById('startBtn').innerText="Pause";
+            timerId = setInterval(() => {
+                if(timeLeft>0){ timeLeft--; updateTimer(); } else{ clearInterval(timerId); isRunning=false; alert("Done!"); }
+            }, 1000);
+        }
+    }
+    function adjustTime(mins) { if(!isRunning && timeLeft + (mins*60) > 0) { timeLeft += mins*60; updateTimer(); }}
+    function resetTimer() { clearInterval(timerId); isRunning=false; timeLeft=25*60; updateTimer(); document.getElementById('startBtn').innerText="Start"; }
+
+    function renderAll() { renderTodos(); renderHabits(); renderArchive(); renderTrash(); }
+    loadPlaylistUI(); renderAll();
+    document.getElementById("todoInput").addEventListener("keypress", (e)=>{if(e.key==="Enter")addTodo()});
+    document.getElementById("habitInput").addEventListener("keypress", (e)=>{if(e.key==="Enter")addHabit()});
+</script>
+
+</body>
+</html>
